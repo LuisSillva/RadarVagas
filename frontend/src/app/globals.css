@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@fontsource-variable/schibsted-grotesk";
+
+/*
+  Paleta (palettepoint): os azuis vão do fundo do mar à superfície.
+  O board usa essa escala para mostrar o avanço de cada candidatura.
+*/
+@theme {
+  --color-abyss: #0c0c10; /* Black Wash */
+  --color-deep: #0e192f; /* Liberty Blue */
+  --color-tyrian: #0d2653; /* Dark Tyrian Blue */
+  --color-dragon: #0d3978; /* Azure Dragon */
+  --color-insignia: #285395; /* Insignia */
+  --color-azraq: #4b70b7; /* Azraq Blue */
+  --color-pannikin: #7a93d5; /* Pannikin */
+
+  --color-ink: #e3e9f8; /* texto principal, derivado do Pannikin */
+  --color-mist: #a9b8e2; /* texto secundário */
+  --color-haze: #6f80ad; /* texto terciário */
+  --color-line: #1b2a4a; /* bordas sobre o fundo */
+  --color-warn: #e8b46a;
+
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-abyss);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-insignia);
+  color: white;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-pannikin);
+  outline-offset: 2px;
+}
+
+/* Barra de rolagem discreta no board horizontal */
+.board-scroll {
+  scrollbar-color: var(--color-tyrian) transparent;
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
