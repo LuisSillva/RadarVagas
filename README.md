@@ -7,7 +7,7 @@ Rastreador pessoal de vagas de **estágio, trainee, bolsa e júnior em desenvolv
 ## Como funciona
 
 ```
-companies.yaml ──► coletor (GitHub Actions, a cada 4h)
+companies.toml ──► coletor (GitHub Actions, a cada 4h)
                      │  adaptadores: Gupy · Greenhouse · Lever · Ashby · SmartRecruiters · Workday · Eightfold · Amazon
                      │  filtro por regras (nível + área de dev + Brasil/exterior)
                      │  IA opcional: casos ambíguos e nota de aderência ao perfil
