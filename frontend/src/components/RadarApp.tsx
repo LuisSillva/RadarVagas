@@ -22,7 +22,7 @@ import { JobCard } from "./JobCard";
 import { JobDrawer } from "./JobDrawer";
 import { PipelineBar } from "./PipelineBar";
 
-type Sort = "recent" | "match";
+type Sort = "recent" | "match" | "deadline";
 
 const TABS: { id: Region; label: string; caption: string }[] = [
   { id: "br", label: "Brasil", caption: "Big techs, bancos e multinacionais com vaga no país" },
@@ -55,11 +55,11 @@ export function RadarApp() {
       .filter((j) => level === "all" || j.level === level)
       .filter((j) => category === "all" || j.company_category === category)
       .filter((j) => !q || `${j.title} ${j.company} ${j.location ?? ""}`.toLowerCase().includes(q))
-      .sort((a, b) =>
-        sort === "match"
-          ? (b.ai_match ?? -1) - (a.ai_match ?? -1)
-          : new Date(b.status_changed_at).getTime() - new Date(a.status_changed_at).getTime(),
-      );
+      .sort((a, b) => {
+        if (sort === "match") return (b.ai_match ?? -1) - (a.ai_match ?? -1);
+        if (sort === "deadline") return deadlineOrder(a) - deadlineOrder(b);
+        return new Date(b.status_changed_at).getTime() - new Date(a.status_changed_at).getTime();
+      });
   }, [regionJobs, level, category, query, sort]);
 
   const byStatus = useMemo(() => {
@@ -203,6 +203,7 @@ export function RadarApp() {
             options={[
               { id: "recent", label: "Recentes" },
               { id: "match", label: "Aderência" },
+              { id: "deadline", label: "Prazo" },
             ]}
           />
 
@@ -238,6 +239,13 @@ export function RadarApp() {
       <ConnectDialog open={connectOpen} hasApi={radar.hasApi} onClose={() => setConnectOpen(false)} onConnect={radar.connect} />
     </div>
   );
+}
+
+// Prazos futuros primeiro (o mais próximo no topo); sem prazo ou já encerrado vai para o fim.
+function deadlineOrder(job: Job): number {
+  if (!job.deadline) return Number.MAX_SAFE_INTEGER;
+  const t = new Date(job.deadline).getTime();
+  return t < Date.now() ? Number.MAX_SAFE_INTEGER - 1 : t;
 }
 
 function Segmented<T extends string>({

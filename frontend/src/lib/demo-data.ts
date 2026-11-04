@@ -51,6 +51,24 @@ const ROWS: Row[] = [
   ["Coinbase", "fintech", "Software Engineer Intern", "Remote - Canada", "intl", "intern", "new", 6.5, 69, null, true],
 ];
 
+// Prazos de inscrição (em dias a partir de hoje) para vagas que vêm da Gupy.
+const DEADLINE_DAYS: Record<string, number> = {
+  "Itaú Unibanco": 2,
+  "Vivo": 0.4,
+  "BTG Pactual": 1,
+  "Bradesco": 6,
+  "XP Inc.": 3,
+  "Sicredi": 12,
+  "Ambev": 19,
+  "Banco Inter": 9,
+  "Gerdau": 5,
+  "Natura &Co": 24,
+  "WEG": 15,
+  "Globo": 4,
+  "Cielo": 30,
+  "Localiza": 8,
+};
+
 export function buildDemoJobs(now = Date.now()): Job[] {
   const day = 86_400_000;
   return ROWS.map((r, i) => {
@@ -69,7 +87,10 @@ export function buildDemoJobs(now = Date.now()): Job[] {
       remote: Boolean(remote) || /remot/i.test(location),
       level,
       posted_at: new Date(now - (daysAgo + 1) * day).toISOString(),
-      deadline: null,
+      deadline:
+        region === "br" && company in DEADLINE_DAYS
+          ? new Date(now + DEADLINE_DAYS[company] * day).toISOString()
+          : null,
       first_seen: seen,
       is_active: !(status === "closed" && i % 2 === 0),
       status,
