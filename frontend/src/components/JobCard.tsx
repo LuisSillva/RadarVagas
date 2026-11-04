@@ -1,8 +1,8 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { MapPin } from "lucide-react";
-import { CATEGORY_LABEL, LEVEL_LABEL, relativeTime } from "@/lib/labels";
+import { Clock, MapPin } from "lucide-react";
+import { CATEGORY_LABEL, deadlineInfo, type DeadlineTone, LEVEL_LABEL, relativeTime } from "@/lib/labels";
 import type { Job } from "@/lib/types";
 
 interface Props {
@@ -23,7 +23,18 @@ export function MatchMeter({ value }: { value: number | null }) {
   );
 }
 
+const DEADLINE_STYLE: Record<DeadlineTone, string> = {
+  urgent: "text-warn font-semibold",
+  soon: "text-warn",
+  normal: "text-mist",
+  past: "text-haze line-through",
+};
+
+// O prazo só importa antes de se candidatar.
+const SHOWS_DEADLINE = new Set(["new", "saved"]);
+
 export function JobCardBody({ job }: { job: Job }) {
+  const deadline = SHOWS_DEADLINE.has(job.status) ? deadlineInfo(job.deadline) : null;
   return (
     <>
       <div className="flex items-baseline justify-between gap-3">
@@ -41,6 +52,12 @@ export function JobCardBody({ job }: { job: Job }) {
           </span>
         )}
       </div>
+      {deadline && (
+        <p className={`mt-2 flex items-center gap-1.5 text-xs ${DEADLINE_STYLE[deadline.tone]}`}>
+          <Clock aria-hidden className="size-3 shrink-0" />
+          {deadline.text}
+        </p>
+      )}
       {job.ai_match !== null && (
         <div className="mt-3">
           <MatchMeter value={job.ai_match} />

@@ -69,6 +69,7 @@ export function buildDemoJobs(now = Date.now()): Job[] {
       remote: Boolean(remote) || /remot/i.test(location),
       level,
       posted_at: new Date(now - (daysAgo + 1) * day).toISOString(),
+      deadline: null,
       first_seen: seen,
       is_active: !(status === "closed" && i % 2 === 0),
       status,

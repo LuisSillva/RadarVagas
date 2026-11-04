@@ -43,6 +43,29 @@ export function relativeTime(iso: string | null | undefined, now = Date.now()): 
   return rtf.format(Math.round(days / 30), "month");
 }
 
+export type DeadlineTone = "urgent" | "soon" | "normal" | "past";
+
+// Dias de calendário entre hoje e o prazo, no fuso de quem está usando.
+function calendarDaysUntil(iso: string, now: number): number {
+  const target = new Date(iso);
+  const today = new Date(now);
+  const a = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const b = Date.UTC(target.getFullYear(), target.getMonth(), target.getDate());
+  return Math.round((b - a) / 86_400_000);
+}
+
+export function deadlineInfo(iso: string | null, now = Date.now()): { text: string; tone: DeadlineTone } | null {
+  if (!iso) return null;
+  if (new Date(iso).getTime() < now) return { text: "Inscrições encerradas", tone: "past" };
+  const days = calendarDaysUntil(iso, now);
+  if (days <= 0) return { text: "Encerra hoje", tone: "urgent" };
+  if (days === 1) return { text: "Encerra amanhã", tone: "urgent" };
+  if (days <= 3) return { text: `Encerra em ${days} dias`, tone: "urgent" };
+  if (days <= 7) return { text: `Encerra em ${days} dias`, tone: "soon" };
+  const date = new Date(iso).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).replace(".", "");
+  return { text: `Inscrições até ${date}`, tone: "normal" };
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });

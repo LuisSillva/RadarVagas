@@ -76,6 +76,7 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
           <Fact term="Aba" value={REGION_LABEL[job.region] + (job.remote ? ", remoto" : "")} />
           <Fact term="Publicada em" value={formatDate(job.posted_at)} />
           <Fact term="Encontrada em" value={formatDate(job.first_seen)} />
+          {job.deadline && <Fact term="Inscrições até" value={formatDate(job.deadline)} />}
         </dl>
 
         {job.url ? (

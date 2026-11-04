@@ -15,6 +15,7 @@ export interface Job {
   remote: boolean;
   level: Level;
   posted_at: string | null;
+  deadline: string | null;
   first_seen: string;
   is_active: boolean;
   status: Status;
