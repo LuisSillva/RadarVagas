@@ -36,6 +36,8 @@ export function RadarApp() {
   const [category, setCategory] = useState<Category | "all">("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("recent");
+  // Remoto é requisito, então vem ligado; desligar mostra também presencial e híbrido.
+  const [remoteOnly, setRemoteOnly] = useState(true);
   const [openId, setOpenId] = useState<number | null>(null);
   const [dragging, setDragging] = useState<Job | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
@@ -47,7 +49,8 @@ export function RadarApp() {
     useSensor(KeyboardSensor, { keyboardCodes: { start: ["Space"], cancel: ["Escape"], end: ["Space", "Enter"] } }),
   );
 
-  const regionJobs = useMemo(() => radar.jobs.filter((j) => j.region === region), [radar.jobs, region]);
+  const scoped = useMemo(() => radar.jobs.filter((j) => !remoteOnly || j.remote), [radar.jobs, remoteOnly]);
+  const regionJobs = useMemo(() => scoped.filter((j) => j.region === region), [scoped, region]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -70,9 +73,9 @@ export function RadarApp() {
 
   const counts = useMemo(() => {
     const c: Record<Region, number> = { br: 0, intl: 0 };
-    for (const j of radar.jobs) if (j.status === "new" && j.is_active) c[j.region] += 1;
+    for (const j of scoped) if (j.status === "new" && j.is_active) c[j.region] += 1;
     return c;
-  }, [radar.jobs]);
+  }, [scoped]);
 
   const openJob = radar.jobs.find((j) => j.id === openId) ?? null;
   const closeDrawer = useCallback(() => setOpenId(null), []);
@@ -164,6 +167,25 @@ export function RadarApp() {
         <PipelineBar jobs={regionJobs} />
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button
+            role="switch"
+            aria-checked={remoteOnly}
+            onClick={() => setRemoteOnly((v) => !v)}
+            className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-sm transition-colors ${
+              remoteOnly ? "border-insignia bg-insignia/25 font-semibold text-ink" : "border-line bg-deep text-mist hover:text-ink"
+            }`}
+          >
+            <span
+              aria-hidden
+              className={`relative h-4 w-7 rounded-full transition-colors ${remoteOnly ? "bg-azraq" : "bg-line"}`}
+            >
+              <span
+                className={`absolute top-0.5 size-3 rounded-full bg-ink transition-[left] ${remoteOnly ? "left-3.5" : "left-0.5"}`}
+              />
+            </span>
+            Só remoto
+          </button>
+
           <label className="relative min-w-[240px] flex-1 sm:max-w-sm">
             <span className="sr-only">Buscar vaga, empresa ou cidade</span>
             <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-haze" />
