@@ -8,7 +8,7 @@ Rastreador pessoal de vagas de **estágio, trainee, bolsa e júnior em desenvolv
 
 ```
 companies.yaml ──► coletor (GitHub Actions, a cada 4h)
-                     │  adaptadores: Gupy · Greenhouse · Lever · Ashby · SmartRecruiters · Workday · Amazon
+                     │  adaptadores: Gupy · Greenhouse · Lever · Ashby · SmartRecruiters · Workday · Eightfold · Amazon
                      │  filtro por regras (nível + área de dev + Brasil/exterior)
                      │  IA opcional: casos ambíguos e nota de aderência ao perfil
                      ▼
@@ -20,6 +20,10 @@ companies.yaml ──► coletor (GitHub Actions, a cada 4h)
 **Só empresa grande, por construção.** O coletor só busca nas empresas listadas em [`backend/app/companies.yaml`](backend/app/companies.yaml). Para adicionar uma, basta descobrir o ATS dela pela URL da página de vagas (o arquivo explica como).
 
 **Filtro em duas camadas.** Regras em [`classify.py`](backend/app/classify.py) resolvem a maioria dos títulos (`Estágio em Desenvolvimento` entra, `Senior Software Engineer` e `Estágio em Marketing` saem). Títulos ambíguos, como `Programa de Estágio 2027`, vão para um LLM, que também dá uma nota de 0 a 100 de aderência ao seu perfil com o motivo em uma frase. A IA é opcional e tem limite de chamadas por coleta.
+
+**Remoto.** Cada vaga é marcada como remota pelo campo do próprio ATS ou por termos como "remoto", "home office" e "anywhere" no título e no local. Híbrido não conta. No site, o filtro "Só remoto" vem ligado.
+
+**Prazo de inscrição.** Quando a fonte informa (a Gupy informa), o cartão mostra quanto falta e dá para ordenar pelo prazo mais próximo.
 
 **Vagas encerradas.** Quando uma vaga some da fonte, ela é marcada como encerrada. Se você já estava no processo, ela continua no board com o aviso.
 
@@ -76,5 +80,5 @@ frontend/
 ## Próximos passos
 
 - Notificação no Telegram ou WhatsApp quando aparecer vaga com aderência alta
-- Mais fontes: Eightfold (Microsoft, Mercado Livre), Google Careers, Cia de Talentos
+- Mais fontes: Google Careers e Cia de Talentos (programas de estágio de bancos e multinacionais)
 - Versão em inglês da interface
