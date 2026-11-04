@@ -10,7 +10,7 @@ from __future__ import annotations
 import html
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -30,6 +30,8 @@ class RawJob:
     remote: bool = False
     posted_at: datetime | None = None
     description: str | None = None
+    # Data limite de inscrição, quando o ATS informa (a Gupy informa).
+    deadline: datetime | None = None
     # Dica de nível vinda do próprio ATS (ex.: Gupy marca "estágio" no tipo da vaga).
     level_hint: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
@@ -87,6 +89,23 @@ def strip_html(value: str | None, limit: int = 4000) -> str | None:
     text = html.unescape(_TAG_RE.sub(" ", html.unescape(value)))
     text = _WS_RE.sub(" ", text).strip()
     return text[:limit] or None
+
+
+BRT = timezone(timedelta(hours=-3))
+
+
+def parse_deadline(value: Any) -> datetime | None:
+    """Prazo só com data ("2026-11-30") vale até o fim do dia no horário de Brasília."""
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    if len(text) == 10:
+        try:
+            end_of_day = datetime.fromisoformat(text).replace(hour=23, minute=59, second=59, tzinfo=BRT)
+            return end_of_day.astimezone(timezone.utc)
+        except ValueError:
+            return None
+    return parse_dt(text)
 
 
 def parse_dt(value: Any) -> datetime | None:

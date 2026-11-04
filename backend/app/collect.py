@@ -144,6 +144,7 @@ def upsert(
             job.remote = raw.remote
             job.description = raw.description
             job.posted_at = raw.posted_at or job.posted_at
+            job.deadline = raw.deadline
             job.last_seen = now
             job.is_active = True
             job.closed_at = None

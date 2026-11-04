@@ -142,3 +142,10 @@ def test_workday():
     [job] = parse_workday(data, "NVIDIA", "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite")
     assert job.external_id == "NVIDIA:JR2001234"
     assert job.url.startswith("https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/")
+
+
+def test_gupy_deadline_is_end_of_day_in_brasilia():
+    job = gupy.parse_job(GUPY_ITEM, "Itaú Unibanco")
+    # 30/11 23:59:59 em Brasília = 01/12 02:59:59 UTC
+    assert job.deadline.isoformat() == "2026-12-01T02:59:59+00:00"
+    assert gupy.parse_job({**GUPY_ITEM, "applicationDeadline": None}, "X").deadline is None

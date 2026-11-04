@@ -11,7 +11,7 @@ import re
 
 import httpx
 
-from .base import CompanySource, RawJob, get_json, parse_dt, strip_html
+from .base import CompanySource, RawJob, get_json, parse_deadline, parse_dt, strip_html
 from ..classify import normalize
 
 API = "https://portal.api.gupy.io/api/v1/jobs"
@@ -59,8 +59,9 @@ def parse_job(item: dict, company: str) -> RawJob:
         remote=remote,
         posted_at=parse_dt(item.get("publishedDate")),
         description=strip_html(item.get("description")),
+        deadline=parse_deadline(item.get("applicationDeadline")),
         level_hint=TYPE_TO_LEVEL.get(item.get("type") or ""),
-        extra={"careerPageName": item.get("careerPageName"), "deadline": item.get("applicationDeadline")},
+        extra={"careerPageName": item.get("careerPageName")},
     )
 
 

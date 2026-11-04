@@ -50,6 +50,7 @@ class Job(Base):
     level: Mapped[str] = mapped_column(String(16), index=True)
     description: Mapped[str | None] = mapped_column(Text)
     posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

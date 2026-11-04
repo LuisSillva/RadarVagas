@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -71,6 +71,7 @@ class JobOut(BaseModel):
     remote: bool
     level: str
     posted_at: datetime | None
+    deadline: datetime | None
     first_seen: datetime
     is_active: bool
     status: str
@@ -78,6 +79,16 @@ class JobOut(BaseModel):
     notes: str
     ai_match: int | None
     ai_reason: str | None
+
+
+    # O SQLite devolve datas sem fuso; tudo é gravado em UTC, então marcamos como UTC.
+    @field_serializer("posted_at", "deadline", "first_seen", "status_changed_at")
+    def _as_utc(self, value: datetime | None) -> str | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc).isoformat()
 
 
 class JobPatch(BaseModel):

@@ -67,3 +67,27 @@ def test_api_requires_token_and_updates(session):
 
         assert client.patch(f"/api/jobs/{job['id']}", json={"status": "inventado"}, headers=AUTH).status_code == 422
         assert client.get("/api/summary", headers=AUTH).json()["counts"]["br"] == {"saved": 1}
+
+
+def test_deadline_flows_to_api(session):
+    job = raw("20", "Estágio em Desenvolvimento")
+    job.deadline = datetime(2026, 12, 1, 2, 59, 59, tzinfo=timezone.utc)
+    upsert(session, {("greenhouse", "Nubank"): [job, raw("21", "Software Engineer Intern")]}, CATS)
+    session.commit()
+    with TestClient(app) as client:
+        jobs = {j["title"]: j for j in client.get("/api/jobs", headers=AUTH).json()}
+    assert jobs["Estágio em Desenvolvimento"]["deadline"] == "2026-12-01T02:59:59+00:00"
+    assert jobs["Software Engineer Intern"]["deadline"] is None
+    assert jobs["Software Engineer Intern"]["first_seen"].endswith("+00:00")
+
+
+def test_init_db_adds_new_columns_to_old_tables(session):
+    from sqlalchemy import inspect, text
+
+    from app.db import engine, init_db
+
+    with engine.begin() as conn:
+        conn.execute(text("DROP TABLE jobs"))
+        conn.execute(text("CREATE TABLE jobs (id INTEGER PRIMARY KEY, title VARCHAR(300))"))
+    init_db()
+    assert "deadline" in {c["name"] for c in inspect(engine).get_columns("jobs")}
