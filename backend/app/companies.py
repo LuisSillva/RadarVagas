@@ -1,14 +1,14 @@
+import tomllib
 from pathlib import Path
-
-import yaml
 
 from .sources.base import CompanySource
 
-COMPANIES_FILE = Path(__file__).with_name("companies.yaml")
+# TOML é lido pela biblioteca padrão (tomllib), sem dependência extra.
+COMPANIES_FILE = Path(__file__).with_name("companies.toml")
 
 
 def load_sources(path: Path = COMPANIES_FILE) -> list[CompanySource]:
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
     sources: list[CompanySource] = []
     for company in data["companies"]:
         for src in company["sources"]:

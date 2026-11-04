@@ -1,0 +1,369 @@
+# Lista curada de empresas-alvo. É ela que define o "só empresa grande":
+# o coletor nunca busca fora daqui.
+#
+# category: big_tech | bank | fintech | multinational
+#
+# Como achar o ATS de uma empresa: abra a página de vagas dela e olhe a URL.
+#   boards.greenhouse.io/<id> ou job-boards.greenhouse.io/<id>  -> greenhouse
+#   jobs.lever.co/<id>                                          -> lever
+#   jobs.ashbyhq.com/<id>                                       -> ashby
+#   jobs.smartrecruiters.com/<id>                               -> smartrecruiters
+#   <tenant>.<wdN>.myworkdayjobs.com/<site>                     -> workday
+#   <empresa>.gupy.io                                           -> gupy (match = nome/subdomínio)
+#   página com "Powered by Eightfold" (ex.: /careers?domain=...)   -> eightfold (id = domínio, host = site)
+#
+# Para adicionar uma empresa, copie um bloco [[companies]] e ajuste.
+# Rode `python scripts/check_sources.py` para validar todas as fontes.
+# Empresas da Gupy que não tiverem vaga aberta simplesmente não aparecem.
+
+
+# big techs
+
+[[companies]]
+name = "Nubank"
+category = "fintech"
+sources = [{ ats = "greenhouse", id = "nubank" }]
+
+[[companies]]
+name = "Mercado Livre"
+category = "big_tech"
+sources = [{ ats = "gupy", match = ["mercado livre", "mercadolivre", "mercado libre"] }]
+
+[[companies]]
+name = "iFood"
+category = "big_tech"
+sources = [{ ats = "gupy", match = ["ifood"] }]
+
+[[companies]]
+name = "Amazon"
+category = "big_tech"
+sources = [{ ats = "amazon" }]
+
+[[companies]]
+name = "NVIDIA"
+category = "big_tech"
+sources = [{ ats = "workday", id = "nvidia", options = { host = "wd5", site = "NVIDIAExternalCareerSite" } }]
+
+[[companies]]
+name = "Salesforce"
+category = "big_tech"
+sources = [{ ats = "workday", id = "salesforce", options = { host = "wd12", site = "External_Career_Site" } }]
+
+[[companies]]
+name = "Intel"
+category = "big_tech"
+sources = [{ ats = "workday", id = "intel", options = { host = "wd1", site = "External" } }]
+
+[[companies]]
+name = "Adobe"
+category = "big_tech"
+sources = [{ ats = "workday", id = "adobe", options = { host = "wd5", site = "external_experienced" } }]
+
+[[companies]]
+name = "Microsoft"
+category = "big_tech"
+sources = [{ ats = "eightfold", id = "microsoft.com", options = { host = "apply.careers.microsoft.com" } }]
+
+[[companies]]
+name = "Netflix"
+category = "big_tech"
+sources = [{ ats = "eightfold", id = "netflix.com", options = { host = "explore.jobs.netflix.net" } }]
+
+[[companies]]
+name = "Qualcomm"
+category = "big_tech"
+sources = [{ ats = "eightfold", id = "qualcomm.com", options = { host = "careers.qualcomm.com" } }]
+
+[[companies]]
+name = "Stripe"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "stripe" }]
+
+[[companies]]
+name = "Airbnb"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "airbnb" }]
+
+[[companies]]
+name = "Databricks"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "databricks" }]
+
+[[companies]]
+name = "Cloudflare"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "cloudflare" }]
+
+[[companies]]
+name = "Figma"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "figma" }]
+
+[[companies]]
+name = "Dropbox"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "dropbox" }]
+
+[[companies]]
+name = "Pinterest"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "pinterest" }]
+
+[[companies]]
+name = "Reddit"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "reddit" }]
+
+[[companies]]
+name = "Discord"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "discord" }]
+
+[[companies]]
+name = "Duolingo"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "duolingo" }]
+
+[[companies]]
+name = "Datadog"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "datadog" }]
+
+[[companies]]
+name = "MongoDB"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "mongodb" }]
+
+[[companies]]
+name = "Roblox"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "roblox" }]
+
+[[companies]]
+name = "Robinhood"
+category = "fintech"
+sources = [{ ats = "greenhouse", id = "robinhood" }]
+
+[[companies]]
+name = "Coinbase"
+category = "fintech"
+sources = [{ ats = "greenhouse", id = "coinbase" }]
+
+[[companies]]
+name = "Anthropic"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "anthropic" }]
+
+[[companies]]
+name = "Palantir"
+category = "big_tech"
+sources = [{ ats = "lever", id = "palantir" }]
+
+[[companies]]
+name = "Spotify"
+category = "big_tech"
+sources = [{ ats = "lever", id = "spotify" }]
+
+[[companies]]
+name = "OpenAI"
+category = "big_tech"
+sources = [{ ats = "ashby", id = "openai" }]
+
+[[companies]]
+name = "Notion"
+category = "big_tech"
+sources = [{ ats = "ashby", id = "notion" }]
+
+[[companies]]
+name = "Ramp"
+category = "fintech"
+sources = [{ ats = "ashby", id = "ramp" }]
+
+
+# Remote-first: empresas grandes que contratam remoto por padrão
+
+[[companies]]
+name = "GitLab"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "gitlab" }]
+
+[[companies]]
+name = "Canonical"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "canonical" }]
+
+[[companies]]
+name = "Elastic"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "elastic" }]
+
+[[companies]]
+name = "Twilio"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "twilio" }]
+
+[[companies]]
+name = "Vercel"
+category = "big_tech"
+sources = [{ ats = "greenhouse", id = "vercel" }]
+
+[[companies]]
+name = "Supabase"
+category = "big_tech"
+sources = [{ ats = "ashby", id = "supabase" }]
+
+[[companies]]
+name = "Visa"
+category = "fintech"
+sources = [{ ats = "smartrecruiters", id = "Visa" }]
+
+[[companies]]
+name = "Mastercard"
+category = "fintech"
+sources = [{ ats = "workday", id = "mastercard", options = { host = "wd1", site = "CorporateCareers" } }]
+
+
+# bancos e fintechs no Brasil
+
+[[companies]]
+name = "Itaú Unibanco"
+category = "bank"
+sources = [{ ats = "gupy", match = ["itau"] }]
+
+[[companies]]
+name = "Bradesco"
+category = "bank"
+sources = [{ ats = "gupy", match = ["bradesco"] }]
+
+[[companies]]
+name = "Santander"
+category = "bank"
+sources = [{ ats = "gupy", match = ["santander"] }]
+
+[[companies]]
+name = "BTG Pactual"
+category = "bank"
+sources = [{ ats = "gupy", match = ["btg pactual", "btgpactual"] }]
+
+[[companies]]
+name = "XP Inc."
+category = "bank"
+sources = [{ ats = "gupy", match = ["xp inc", "xpinc", "grupo xp"] }]
+
+[[companies]]
+name = "Banco Inter"
+category = "bank"
+sources = [{ ats = "gupy", match = ["banco inter", "bancointer"] }]
+
+[[companies]]
+name = "Stone"
+category = "fintech"
+sources = [{ ats = "gupy", match = ["stone co", "stoneco", "grupo stone", "jornada stone"] }]
+
+[[companies]]
+name = "PagBank"
+category = "fintech"
+sources = [{ ats = "gupy", match = ["pagbank", "pagseguro"] }]
+
+[[companies]]
+name = "PicPay"
+category = "fintech"
+sources = [{ ats = "gupy", match = ["picpay"] }]
+
+[[companies]]
+name = "Cielo"
+category = "fintech"
+sources = [{ ats = "gupy", match = ["cielo"] }]
+
+[[companies]]
+name = "Sicredi"
+category = "bank"
+sources = [{ ats = "gupy", match = ["sicredi"] }]
+
+
+# multinacionais
+
+[[companies]]
+name = "Ambev"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["ambev"] }]
+
+[[companies]]
+name = "Natura &Co"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["natura"] }]
+
+[[companies]]
+name = "Magazine Luiza"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["magalu", "magazine luiza", "luizalabs"] }]
+
+[[companies]]
+name = "Localiza"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["localiza"] }]
+
+[[companies]]
+name = "Vivo"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["vivo telefonica", "telefonica vivo", "vemprovivo"] }]
+
+[[companies]]
+name = "TOTVS"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["totvs"] }]
+
+[[companies]]
+name = "CI&T"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["ci&t", "ciandt"] }]
+
+[[companies]]
+name = "Globo"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["globo"] }]
+
+[[companies]]
+name = "WEG"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["weg"] }]
+
+[[companies]]
+name = "Gerdau"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["gerdau"] }]
+
+[[companies]]
+name = "Renner"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["lojas renner", "renner"] }]
+
+[[companies]]
+name = "Raízen"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["raizen"] }]
+
+[[companies]]
+name = "Vale"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["vale s.a", "vale sa"] }]
+
+[[companies]]
+name = "Embraer"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["embraer"] }]
+
+[[companies]]
+name = "Unilever"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["unilever"] }]
+
+[[companies]]
+name = "Accenture"
+category = "multinational"
+sources = [{ ats = "gupy", match = ["accenture"] }]
+
+[[companies]]
+name = "Bosch"
+category = "multinational"
+sources = [{ ats = "smartrecruiters", id = "BoschGroup" }]

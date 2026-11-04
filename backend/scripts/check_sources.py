@@ -1,4 +1,4 @@
-"""Testa cada fonte do companies.yaml e mostra quantas vagas (e quantas de
+"""Testa cada fonte do companies.toml e mostra quantas vagas (e quantas de
 entrada) ela devolve. Use quando adicionar uma empresa ou se a coleta
 começar a falhar.
 
