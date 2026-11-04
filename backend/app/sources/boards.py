@@ -231,6 +231,66 @@ def fetch_amazon(client: httpx.Client, src: CompanySource) -> list[RawJob]:
     return list(seen.values())
 
 
+# ------------------------------------------------------------------ Eightfold
+# Usado por Microsoft, Netflix, Qualcomm e outras. O site de carreiras chama uma
+# API JSON pública. Existem duas versões: a nova (pcsx) e a antiga (apply/v2);
+# tentamos a nova e caímos na antiga. `id` = domínio da empresa, options.host = site.
+
+EIGHTFOLD_SEARCHES = ["intern", "internship", "new grad", "junior", "estágio"]
+
+
+def _eightfold_remote(item: dict) -> bool:
+    option = str(item.get("workLocationOption") or item.get("work_location_option") or "").lower()
+    return option == "remote" or bool(item.get("isRemote"))
+
+
+def parse_eightfold(data: dict, company: str, host: str) -> list[RawJob]:
+    payload = data.get("data") if isinstance(data.get("data"), dict) else data
+    jobs = []
+    for item in payload.get("positions", []):
+        locations = item.get("locations") or ([item["location"]] if item.get("location") else [])
+        url = item.get("canonicalPositionUrl") or item.get("positionUrl") or f"/careers/job/{item.get('id')}"
+        if url.startswith("/"):
+            url = f"https://{host}{url}"
+        posted = item.get("postedTs") or item.get("t_create") or item.get("t_update")
+        jobs.append(
+            RawJob(
+                source="eightfold",
+                external_id=f"{company}:{item.get('atsJobId') or item.get('ats_job_id') or item.get('id')}",
+                company=company,
+                title=(item.get("name") or item.get("title") or "").strip(),
+                url=url,
+                location="; ".join(locations[:3]) or None,
+                remote=_eightfold_remote(item),
+                posted_at=parse_dt(posted * 1000) if isinstance(posted, (int, float)) else parse_dt(posted),
+                description=strip_html(item.get("job_description") or item.get("description")),
+            )
+        )
+    return jobs
+
+
+def fetch_eightfold(client: httpx.Client, src: CompanySource) -> list[RawJob]:
+    host, domain = src.options["host"], src.id
+    seen: dict[str, RawJob] = {}
+    endpoints = [f"https://{host}/api/pcsx/search", f"https://{host}/api/apply/v2/jobs"]
+    last_error: SourceError | None = None
+    for endpoint in endpoints:
+        try:
+            for term in src.options.get("searches", EIGHTFOLD_SEARCHES):
+                for start in range(0, 100, 10):
+                    data = get_json(client, endpoint, params={"domain": domain, "query": term, "start": start, "num": 10})
+                    batch = parse_eightfold(data, src.company, host)
+                    for job in batch:
+                        seen[job.external_id] = job
+                    if len(batch) < 10:
+                        break
+            return list(seen.values())
+        except SourceError as exc:
+            last_error = exc
+            seen.clear()
+    raise last_error or SourceError(f"eightfold {host}: sem resposta")
+
+
 FETCHERS = {
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
@@ -238,4 +298,5 @@ FETCHERS = {
     "smartrecruiters": fetch_smartrecruiters,
     "workday": fetch_workday,
     "amazon": fetch_amazon,
+    "eightfold": fetch_eightfold,
 }

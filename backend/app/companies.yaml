@@ -10,6 +10,7 @@
 #   jobs.smartrecruiters.com/<id>                               -> smartrecruiters
 #   <tenant>.<wdN>.myworkdayjobs.com/<site>                     -> workday
 #   <empresa>.gupy.io                                           -> gupy (match = nome/subdomínio)
+#   página com "Powered by Eightfold" (ex.: /careers?domain=...)   -> eightfold (id = domínio, host = site)
 #
 # Rode `python scripts/check_sources.py` para validar todas as fontes.
 # Empresas da Gupy que não tiverem vaga aberta simplesmente não aparecem.
@@ -40,6 +41,15 @@ companies:
   - name: Adobe
     category: big_tech
     sources: [{ats: workday, id: adobe, options: {host: wd5, site: external_experienced}}]
+  - name: Microsoft
+    category: big_tech
+    sources: [{ats: eightfold, id: microsoft.com, options: {host: apply.careers.microsoft.com}}]
+  - name: Netflix
+    category: big_tech
+    sources: [{ats: eightfold, id: netflix.com, options: {host: explore.jobs.netflix.net}}]
+  - name: Qualcomm
+    category: big_tech
+    sources: [{ats: eightfold, id: qualcomm.com, options: {host: careers.qualcomm.com}}]
   - name: Stripe
     category: big_tech
     sources: [{ats: greenhouse, id: stripe}]

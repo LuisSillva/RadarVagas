@@ -149,3 +149,43 @@ def test_gupy_deadline_is_end_of_day_in_brasilia():
     # 30/11 23:59:59 em Brasília = 01/12 02:59:59 UTC
     assert job.deadline.isoformat() == "2026-12-01T02:59:59+00:00"
     assert gupy.parse_job({**GUPY_ITEM, "applicationDeadline": None}, "X").deadline is None
+
+
+def test_eightfold_v2_and_pcsx_shapes():
+    from app.sources.boards import parse_eightfold
+
+    v2 = {
+        "count": 1,
+        "positions": [
+            {
+                "id": 1970393556625300,
+                "ats_job_id": "200012345",
+                "name": "Software Engineer: Internship Opportunities",
+                "locations": ["Redmond, Washington, United States"],
+                "t_create": 1761000000,
+                "canonicalPositionUrl": "https://apply.careers.microsoft.com/careers/job/1970393556625300",
+                "work_location_option": "onsite",
+            }
+        ],
+    }
+    [job] = parse_eightfold(v2, "Microsoft", "apply.careers.microsoft.com")
+    assert job.external_id == "Microsoft:200012345" and not job.remote
+    assert job.posted_at.year == 2025
+
+    pcsx = {
+        "data": {
+            "count": 1,
+            "positions": [
+                {
+                    "id": 790300000001,
+                    "name": "Software Engineering Intern",
+                    "locations": ["Remote, Brazil"],
+                    "postedTs": 1761000000,
+                    "positionUrl": "/careers/job/790300000001",
+                    "workLocationOption": "remote",
+                }
+            ],
+        }
+    }
+    [job] = parse_eightfold(pcsx, "Netflix", "explore.jobs.netflix.net")
+    assert job.remote and job.url == "https://explore.jobs.netflix.net/careers/job/790300000001"
