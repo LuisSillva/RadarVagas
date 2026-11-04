@@ -17,7 +17,7 @@ companies.yaml ──► coletor (GitHub Actions, a cada 4h)
 
 **Sem scraping de LinkedIn.** As vagas vêm das APIs públicas que alimentam as próprias páginas de carreira das empresas (Gupy, Greenhouse etc.). É mais estável, respeita os termos de uso e traz o link oficial da candidatura.
 
-**Só empresa grande, por construção.** O coletor só busca nas empresas listadas em [`backend/app/companies.yaml`](backend/app/companies.yaml). Para adicionar uma, basta descobrir o ATS dela pela URL da página de vagas (o arquivo explica como).
+**Só empresa grande, por construção.** O coletor só busca nas empresas listadas em [`backend/app/companies.toml`](backend/app/companies.toml). Para adicionar uma, basta descobrir o ATS dela pela URL da página de vagas (o arquivo explica como).
 
 **Filtro em duas camadas.** Regras em [`classify.py`](backend/app/classify.py) resolvem a maioria dos títulos (`Estágio em Desenvolvimento` entra, `Senior Software Engineer` e `Estágio em Marketing` saem). Títulos ambíguos, como `Programa de Estágio 2027`, vão para um LLM, que também dá uma nota de 0 a 100 de aderência ao seu perfil com o motivo em uma frase. A IA é opcional e tem limite de chamadas por coleta.
 
@@ -29,14 +29,14 @@ companies.yaml ──► coletor (GitHub Actions, a cada 4h)
 
 ## Rodando localmente
 
-Backend (Python 3.12+):
+Backend (Python 3.12 ou 3.13, 64 bits; versões mais novas podem não ter pacotes prontos no Windows):
 
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env               # ajuste ADMIN_TOKEN
-python scripts/check_sources.py    # testa as fontes do companies.yaml
+python scripts/check_sources.py    # testa as fontes do companies.toml
 python -m app.collect              # primeira coleta (SQLite local)
 uvicorn app.main:app --reload      # API em http://localhost:8000/docs
 python -m pytest -q
