@@ -130,6 +130,7 @@ def list_jobs(
     region: Literal["br", "intl"] | None = None,
     level: Literal["intern", "trainee", "junior"] | None = None,
     category: str | None = None,
+    remote: bool | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
     include_closed: bool = False,
 ) -> list[Job]:
@@ -140,6 +141,8 @@ def list_jobs(
         stmt = stmt.where(Job.level == level)
     if category:
         stmt = stmt.where(Job.company_category == category)
+    if remote is not None:
+        stmt = stmt.where(Job.remote.is_(remote))
     if q:
         like = f"%{q}%"
         stmt = stmt.where(or_(Job.title.ilike(like), Job.company.ilike(like), Job.location.ilike(like)))

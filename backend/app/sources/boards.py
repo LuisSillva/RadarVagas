@@ -90,7 +90,7 @@ def parse_ashby(data: dict, company: str) -> list[RawJob]:
                 url=item.get("jobUrl") or item.get("applyUrl") or "",
                 location=item.get("location"),
                 country=address.get("addressCountry"),
-                remote=bool(item.get("isRemote")),
+                remote=bool(item.get("isRemote")) or (item.get("workplaceType") or "").lower() == "remote",
                 posted_at=parse_dt(item.get("publishedAt")),
                 description=strip_html(item.get("descriptionPlain") or item.get("descriptionHtml")),
                 level_hint="intern" if employment == "intern" else None,
@@ -170,7 +170,8 @@ def parse_workday(data: dict, company: str, base_url: str) -> list[RawJob]:
                 title=item.get("title", "").strip(),
                 url=f"{base_url}{path}",
                 location=item.get("locationsText"),
-                remote="remote" in (item.get("locationsText") or "").lower(),
+                remote=(item.get("remoteType") or "").lower() == "remote"
+                or "remote" in (item.get("locationsText") or "").lower(),
                 # Workday só dá texto tipo "Posted 3 Days Ago"; guardamos para exibir.
                 extra={"postedOn": item.get("postedOn"), "reqId": bullets[0] if bullets else None},
             )

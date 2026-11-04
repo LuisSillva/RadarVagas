@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .ai import Judge
-from .classify import classify_dev, classify_level, classify_region
+from .classify import classify_dev, classify_level, classify_region, classify_remote
 from .companies import load_sources
 from .config import get_settings
 from .db import SessionLocal, init_db
@@ -141,7 +141,7 @@ def upsert(
             job.location = raw.location
             job.country = raw.country
             job.region = classify_region(raw)
-            job.remote = raw.remote
+            job.remote = classify_remote(raw)
             job.description = raw.description
             job.posted_at = raw.posted_at or job.posted_at
             job.deadline = raw.deadline

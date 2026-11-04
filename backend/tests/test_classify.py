@@ -71,3 +71,23 @@ def test_dev(title, expected):
 def test_region(location, country, source, expected):
     job = RawJob(source=source, external_id="1", company="X", title="t", url="u", location=location, country=country)
     assert classify_region(job) == expected
+
+
+@pytest.mark.parametrize(
+    "title,location,flag,expected",
+    [
+        ("Software Engineer Intern", "Remote - Brazil", False, True),
+        ("Estágio em Dados", "Remoto", False, True),
+        ("Estágio em TI (Home Office)", "Porto Alegre, RS", False, True),
+        ("Desenvolvedor Júnior", "São Paulo, SP", True, True),  # ATS marcou como remoto
+        ("Desenvolvedor Júnior - Híbrido", "São Paulo, SP", True, False),
+        ("Software Engineer Intern", "Hybrid - Dublin", False, False),
+        ("Software Engineer Intern", "London, UK", False, False),
+        ("Backend Intern", "Anywhere", False, True),
+    ],
+)
+def test_remote(title, location, flag, expected):
+    from app.classify import classify_remote
+
+    job = RawJob(source="x", external_id="1", company="X", title=title, url="u", location=location, remote=flag)
+    assert classify_remote(job) is expected

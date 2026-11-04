@@ -215,6 +215,30 @@ def classify_dev(title: str) -> bool | None:
     return False
 
 
+# ----------------------------------------------------------------- remoto
+
+REMOTE_RX = _rx(
+    r"\bremot[eo]\b",
+    r"\bremotely\b",
+    r"\bhome[- ]?office\b",
+    r"\banywhere\b",
+    r"\bteletrabalho\b",
+    r"\bwork from home\b",
+    r"\bwfh\b",
+    r"\b100% (online|remoto)\b",
+    r"\bdistributed\b",
+)
+HYBRID_RX = _rx(r"\bhibrid[oa]\b", r"\bhybrid\b", r"\bpresencial\b", r"\bon-?site\b", r"\bin[- ]office\b")
+
+
+def classify_remote(job: RawJob) -> bool:
+    """Remoto de verdade: o ATS marcou ou o título/local diz. Híbrido não conta."""
+    text = normalize(f"{job.title} {job.location or ''}")
+    if HYBRID_RX.search(text) and not REMOTE_RX.search(normalize(job.location)):
+        return False
+    return job.remote or bool(REMOTE_RX.search(text))
+
+
 # ------------------------------------------------------------------ região
 
 BR_RX = _rx(

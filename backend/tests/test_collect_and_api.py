@@ -91,3 +91,17 @@ def test_init_db_adds_new_columns_to_old_tables(session):
         conn.execute(text("CREATE TABLE jobs (id INTEGER PRIMARY KEY, title VARCHAR(300))"))
     init_db()
     assert "deadline" in {c["name"] for c in inspect(engine).get_columns("jobs")}
+
+
+def test_remote_filter(session):
+    upsert(
+        session,
+        {("greenhouse", "Nubank"): [raw("30", "Software Engineer Intern", "Remote - Brazil"), raw("31", "Data Engineer Intern", "São Paulo, Brazil")]},
+        CATS,
+    )
+    session.commit()
+    with TestClient(app) as client:
+        remote = client.get("/api/jobs", params={"remote": "true"}, headers=AUTH).json()
+        onsite = client.get("/api/jobs", params={"remote": "false"}, headers=AUTH).json()
+    assert [j["title"] for j in remote] == ["Software Engineer Intern"]
+    assert [j["title"] for j in onsite] == ["Data Engineer Intern"]
