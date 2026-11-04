@@ -113,6 +113,25 @@ companies:
   - name: Ramp
     category: fintech
     sources: [{ats: ashby, id: ramp}]
+  # Remote-first: empresas grandes que contratam remoto por padrão
+  - name: GitLab
+    category: big_tech
+    sources: [{ats: greenhouse, id: gitlab}]
+  - name: Canonical
+    category: big_tech
+    sources: [{ats: greenhouse, id: canonical}]
+  - name: Elastic
+    category: big_tech
+    sources: [{ats: greenhouse, id: elastic}]
+  - name: Twilio
+    category: big_tech
+    sources: [{ats: greenhouse, id: twilio}]
+  - name: Vercel
+    category: big_tech
+    sources: [{ats: greenhouse, id: vercel}]
+  - name: Supabase
+    category: big_tech
+    sources: [{ats: ashby, id: supabase}]
   - name: Visa
     category: fintech
     sources: [{ats: smartrecruiters, id: Visa}]
