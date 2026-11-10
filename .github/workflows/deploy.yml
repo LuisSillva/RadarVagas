@@ -1,0 +1,61 @@
+name: Coletar vagas e publicar
+
+# Roda a cada 4 horas, a cada push na main e quando você clicar em "Run workflow".
+# Coleta as vagas, gera o site estático e publica no GitHub Pages. Sem banco,
+# sem servidor e sem segredos: o histórico vem do jobs.json já publicado.
+on:
+  schedule:
+    - cron: "17 */4 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Coletar vagas
+        run: npm run collect
+        env:
+          PREVIOUS_JOBS_URL: ${{ steps.pages.outputs.base_url }}/jobs.json
+
+      - name: Gerar site
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
