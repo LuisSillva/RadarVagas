@@ -1,6 +1,6 @@
 // Gupy: principal ATS das grandes empresas no Brasil.
 //
-// Usa a API pública do portal de vagas (a mesma que alimenta portal.gupy.io).
+// Usa a API do portal de vagas (a mesma que a página portal.gupy.io chama).
 // Ela exige um termo de busca, então rodamos várias buscas de dev e só
 // guardamos vagas de empresas que estão na lista (campo `match`).
 
@@ -9,11 +9,15 @@ import { normalize } from "../classify";
 import { getJson, parseDate, parseDeadline } from "../http";
 import type { CompanySource, RawJob } from "../types";
 
-const API = "https://portal.api.gupy.io/api/v1/jobs";
+const API = "https://portal.gupy.io/api/job-search/jobs";
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 
 const SEARCH_TERMS = [
+  "estágio",
+  "estagiário",
+  "júnior",
+  "trainee",
   "estágio desenvolvimento",
   "estágio tecnologia",
   "estágio software",
@@ -71,7 +75,9 @@ export function parseGupyJob(item: GupyItem, company: string): RawJob {
 }
 
 export function matchGupyCompany(item: Partial<GupyItem>, sources: CompanySource[]): CompanySource | null {
-  const haystack = normalize(`${item.careerPageName ?? ""} ${item.careerPageUrl ?? ""}`);
+  // O careerPageUrl costuma vir vazio; o subdomínio da empresa aparece no jobUrl (ex.: vemproitau.gupy.io).
+  const host = (item.jobUrl ?? item.careerPageUrl ?? "").replace(/^https?:\/\//, "").split("/")[0];
+  const haystack = normalize(`${item.careerPageName ?? ""} ${item.careerPageUrl ?? ""} ${host}`);
   for (const src of sources) {
     for (const term of src.match ?? []) {
       // Palavra inteira, para "weg" não casar com "norwegian".
@@ -87,7 +93,7 @@ export async function fetchGupy(sources: CompanySource[]): Promise<Map<string, R
   const found = new Map<string, Map<string, RawJob>>(sources.map((s) => [s.company, new Map()]));
   for (const term of SEARCH_TERMS) {
     for (let page = 0; page < MAX_PAGES; page++) {
-      const data = await getJson<{ data?: GupyItem[]; pagination?: { total?: number } }>(API, {
+      const data = await getJson<{ data?: GupyItem[] }>(API, {
         jobName: term,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
@@ -100,8 +106,8 @@ export async function fetchGupy(sources: CompanySource[]): Promise<Map<string, R
           found.get(src.company)!.set(job.externalId, job);
         }
       }
-      const total = data.pagination?.total ?? 0;
-      if (items.length < PAGE_SIZE || (page + 1) * PAGE_SIZE >= total) break;
+      // O "total" da paginação não é confiável; a última página é a que vem incompleta.
+      if (items.length < PAGE_SIZE) break;
     }
   }
   return new Map([...found].map(([company, jobs]) => [company, [...jobs.values()]]));

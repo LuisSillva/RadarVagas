@@ -41,6 +41,15 @@ describe("Gupy", () => {
     expect(job.postedAt).toBe("2026-10-28T13:00:00.000Z");
   });
 
+  it("acha a empresa pelo subdomínio do jobUrl quando não há careerPageUrl", () => {
+    const item = { careerPageName: "Vem pro Itaú", careerPageUrl: "", jobUrl: "https://vemproitau.gupy.io/job/abc" };
+    expect(matchGupyCompany({ ...item, careerPageName: "Banco" }, sources)).toBeNull();
+    expect(matchGupyCompany({ careerPageName: "Grupo X", jobUrl: "https://weg.gupy.io/job/1" }, sources)?.company).toBe(
+      "WEG",
+    );
+    expect(matchGupyCompany(item, sources)?.company).toBe("Itaú Unibanco");
+  });
+
   it("casa só palavra inteira", () => {
     expect(matchGupyCompany({ careerPageName: "Norwegian Air" }, sources)).toBeNull();
     expect(
@@ -50,6 +59,9 @@ describe("Gupy", () => {
 
   it("prazo só com data vale até o fim do dia em Brasília", () => {
     expect(parseGupyJob(GUPY_ITEM, "X").deadline).toBe("2026-12-01T02:59:59.000Z");
+    expect(parseGupyJob({ ...GUPY_ITEM, applicationDeadline: "2026-11-30T00:00:00.000Z" }, "X").deadline).toBe(
+      "2026-12-01T02:59:59.000Z",
+    );
     expect(parseGupyJob({ ...GUPY_ITEM, applicationDeadline: null }, "X").deadline).toBeNull();
   });
 

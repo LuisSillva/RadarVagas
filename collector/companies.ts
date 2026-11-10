@@ -96,7 +96,11 @@ export const COMPANIES: Company[] = [
   },
 
   // bancos e fintechs no Brasil
-  { name: "Itaú Unibanco", category: "bank", sources: [{ ats: "gupy", match: ["itau"] }] },
+  { name: "Safra", category: "bank", sources: [{ ats: "gupy", match: ["safra", "venhasersafra"] }] },
+  { name: "Porto", category: "bank", sources: [{ ats: "gupy", match: ["porto.gupy.io"] }] },
+  { name: "Brasilprev", category: "bank", sources: [{ ats: "gupy", match: ["brasilprev"] }] },
+  { name: "Núclea", category: "fintech", sources: [{ ats: "gupy", match: ["nuclea"] }] },
+  { name: "Itaú Unibanco", category: "bank", sources: [{ ats: "gupy", match: ["itau unibanco", "vemproitau"] }] },
   { name: "Bradesco", category: "bank", sources: [{ ats: "gupy", match: ["bradesco"] }] },
   { name: "Santander", category: "bank", sources: [{ ats: "gupy", match: ["santander"] }] },
   { name: "BTG Pactual", category: "bank", sources: [{ ats: "gupy", match: ["btg pactual", "btgpactual"] }] },
@@ -128,7 +132,7 @@ export const COMPANIES: Company[] = [
   },
   { name: "TOTVS", category: "multinational", sources: [{ ats: "gupy", match: ["totvs"] }] },
   { name: "CI&T", category: "multinational", sources: [{ ats: "gupy", match: ["ci&t", "ciandt"] }] },
-  { name: "Globo", category: "multinational", sources: [{ ats: "gupy", match: ["globo"] }] },
+  { name: "Globo", category: "multinational", sources: [{ ats: "gupy", match: ["grupo globo", "vemproglobo"] }] },
   { name: "WEG", category: "multinational", sources: [{ ats: "gupy", match: ["weg"] }] },
   { name: "Gerdau", category: "multinational", sources: [{ ats: "gupy", match: ["gerdau"] }] },
   { name: "Renner", category: "multinational", sources: [{ ats: "gupy", match: ["lojas renner", "renner"] }] },
@@ -136,6 +140,10 @@ export const COMPANIES: Company[] = [
   { name: "Vale", category: "multinational", sources: [{ ats: "gupy", match: ["vale s.a", "vale sa"] }] },
   { name: "Embraer", category: "multinational", sources: [{ ats: "gupy", match: ["embraer"] }] },
   { name: "Unilever", category: "multinational", sources: [{ ats: "gupy", match: ["unilever"] }] },
+  { name: "Claro", category: "multinational", sources: [{ ats: "gupy", match: ["vempraclaro"] }] },
+  { name: "TIM Brasil", category: "multinational", sources: [{ ats: "gupy", match: ["tim brasil", "vemprotime"] }] },
+  { name: "Stefanini", category: "multinational", sources: [{ ats: "gupy", match: ["stefanini", "vagasstefanini"] }] },
+  { name: "Scania", category: "multinational", sources: [{ ats: "gupy", match: ["scania"] }] },
   { name: "Accenture", category: "multinational", sources: [{ ats: "gupy", match: ["accenture"] }] },
   { name: "Bosch", category: "multinational", sources: [{ ats: "smartrecruiters", id: "BoschGroup" }] },
 ];

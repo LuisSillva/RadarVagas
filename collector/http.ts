@@ -45,7 +45,10 @@ export function parseDate(value: unknown): string | null {
 /** Prazo só com data ("2026-11-30") vale até o fim do dia no horário de Brasília. */
 export function parseDeadline(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
-  const text = String(value).trim();
+  // A Gupy manda "2026-11-30" ou "2026-11-30T00:00:00.000Z": nos dois casos é o dia todo.
+  const text = String(value)
+    .trim()
+    .replace(/T00:00:00(\.000)?Z$/, "");
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return parseDate(`${text}T23:59:59-03:00`);
   return parseDate(text);
 }
