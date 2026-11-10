@@ -75,6 +75,7 @@ describe("remoto", () => {
     ["Software Engineer Intern", "Hybrid - Dublin", false, false],
     ["Software Engineer Intern", "London, UK", false, false],
     ["Backend Intern", "Anywhere", false, true],
+    ["Software Engineer - New Grad, Distributed Data Systems", "Mountain View, California", false, false],
   ])("%s / %s → %s", (title, location, remote, expected) => {
     expect(classifyRemote({ title, location, remote })).toBe(expected);
   });

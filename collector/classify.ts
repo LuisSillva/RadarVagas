@@ -239,7 +239,6 @@ const REMOTE_RX = rx(
   String.raw`\bwork from home\b`,
   String.raw`\bwfh\b`,
   String.raw`\b100% (online|remoto)\b`,
-  String.raw`\bdistributed\b`,
 );
 const HYBRID_RX = rx(
   String.raw`\bhibrid[oa]\b`,
