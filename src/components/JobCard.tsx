@@ -1,26 +1,15 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, MapPin, Wifi } from "lucide-react";
 import { CATEGORY_LABEL, deadlineInfo, type DeadlineTone, LEVEL_LABEL, relativeTime } from "@/lib/labels";
-import type { Job } from "@/lib/types";
+import type { BoardJob } from "@/lib/types";
 
 interface Props {
-  job: Job;
-  onOpen: (job: Job) => void;
+  job: BoardJob;
+  fresh?: boolean;
+  onOpen: (job: BoardJob) => void;
   overlay?: boolean;
-}
-
-export function MatchMeter({ value }: { value: number | null }) {
-  if (value === null) return null;
-  return (
-    <div className="flex items-center gap-2" title="Aderência ao seu perfil, calculada pela IA">
-      <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
-        <div className="h-full rounded-full bg-pannikin" style={{ width: `${value}%` }} />
-      </div>
-      <span className="text-xs text-mist tabular-nums">{value}%</span>
-    </div>
-  );
 }
 
 const DEADLINE_STYLE: Record<DeadlineTone, string> = {
@@ -33,19 +22,30 @@ const DEADLINE_STYLE: Record<DeadlineTone, string> = {
 // O prazo só importa antes de se candidatar.
 const SHOWS_DEADLINE = new Set(["new", "saved"]);
 
-export function JobCardBody({ job }: { job: Job }) {
+export function JobCardBody({ job, fresh }: { job: BoardJob; fresh?: boolean }) {
   const deadline = SHOWS_DEADLINE.has(job.status) ? deadlineInfo(job.deadline) : null;
   return (
     <>
       <div className="flex items-baseline justify-between gap-3">
         <span className="truncate text-[13px] font-semibold text-pannikin">{job.company}</span>
-        <span className="shrink-0 text-xs text-haze">{relativeTime(job.first_seen)}</span>
+        <span className="flex shrink-0 items-center gap-1.5 text-xs text-haze">
+          {fresh && (
+            <span className="rounded-md bg-azraq/30 px-1.5 py-px text-[11px] font-semibold text-ink">nova</span>
+          )}
+          {job.source === "manual" ? "sua" : relativeTime(job.firstSeen)}
+        </span>
       </div>
       <h3 className="mt-1 text-[15px] leading-snug font-medium text-ink">{job.title}</h3>
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-mist">
         <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-medium text-ink">{LEVEL_LABEL[job.level]}</span>
-        <span className="text-haze">{CATEGORY_LABEL[job.company_category]}</span>
-        {job.location && (
+        {job.remote && (
+          <span className="flex items-center gap-1 text-ink">
+            <Wifi aria-hidden className="size-3" />
+            Remoto
+          </span>
+        )}
+        {job.category && <span className="text-haze">{CATEGORY_LABEL[job.category]}</span>}
+        {job.location && !(job.remote && /^(remot[eo]|anywhere)$/i.test(job.location.trim())) && (
           <span className="flex min-w-0 items-center gap-1">
             <MapPin aria-hidden className="size-3 shrink-0" />
             <span className="truncate">{job.location}</span>
@@ -58,17 +58,12 @@ export function JobCardBody({ job }: { job: Job }) {
           {deadline.text}
         </p>
       )}
-      {job.ai_match !== null && (
-        <div className="mt-3">
-          <MatchMeter value={job.ai_match} />
-        </div>
-      )}
-      {!job.is_active && <p className="mt-2 text-xs text-warn">A vaga saiu do ar</p>}
+      {!job.active && <p className="mt-2 text-xs text-warn">A vaga saiu do ar</p>}
     </>
   );
 }
 
-export function JobCard({ job, onOpen, overlay }: Props) {
+export function JobCard({ job, fresh, onOpen, overlay }: Props) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: job.id, data: { job } });
 
   if (overlay) {
@@ -89,9 +84,9 @@ export function JobCard({ job, onOpen, overlay }: Props) {
       aria-label={`${job.title}, ${job.company}. Enter para abrir, espaço para mover.`}
       className={`block w-full cursor-grab touch-manipulation rounded-xl border border-white/[0.07] bg-black/30 p-3.5 text-left transition-colors hover:border-white/20 hover:bg-black/40 active:cursor-grabbing ${
         isDragging ? "opacity-30" : ""
-      } ${job.is_active ? "" : "opacity-60"}`}
+      } ${job.active ? "" : "opacity-60"}`}
     >
-      <JobCardBody job={job} />
+      <JobCardBody job={job} fresh={fresh} />
     </button>
   );
 }

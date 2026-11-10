@@ -1,11 +1,11 @@
-__pycache__/
-*.pyc
-.venv/
-.env
-*.db
-.pytest_cache/
 node_modules/
 .next/
 out/
-.env.local
+*.tsbuildinfo
+next-env.d.ts
+.env*
+.vercel
 .DS_Store
+
+# gerado pelo coletor (o site publicado guarda a cópia oficial)
+public/jobs.json

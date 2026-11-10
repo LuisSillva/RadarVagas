@@ -11,26 +11,33 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { Download, Plus, Search, Upload } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useBoard } from "@/lib/board";
 import { CATEGORY_LABEL, LEVEL_LABEL, relativeTime, STATUSES } from "@/lib/labels";
-import { useRadar } from "@/lib/store";
-import type { Category, Job, Level, Region, Status } from "@/lib/types";
+import type { BoardJob, Category, JobsFile, Level, Region, Status } from "@/lib/types";
+import { AddJobDialog } from "./AddJobDialog";
 import { Column } from "./Column";
-import { ConnectDialog } from "./ConnectDialog";
 import { JobCard } from "./JobCard";
 import { JobDrawer } from "./JobDrawer";
 import { PipelineBar } from "./PipelineBar";
 
-type Sort = "recent" | "match" | "deadline";
+type Sort = "recent" | "deadline";
 
 const TABS: { id: Region; label: string; caption: string }[] = [
   { id: "br", label: "Brasil", caption: "Big techs, bancos e multinacionais com vaga no país" },
   { id: "intl", label: "Exterior", caption: "Estágio, trainee e júnior fora do Brasil" },
 ];
 
-export function RadarApp() {
-  const radar = useRadar();
+const CATEGORY_PLURAL: Record<Category, string> = {
+  big_tech: "Big techs",
+  bank: "Bancos",
+  fintech: "Fintechs",
+  multinational: "Multinacionais",
+};
+
+export function RadarApp({ data }: { data: JobsFile | null }) {
+  const board = useBoard(data);
   const [region, setRegion] = useState<Region>("br");
   const [level, setLevel] = useState<Level | "all">("all");
   const [category, setCategory] = useState<Category | "all">("all");
@@ -38,9 +45,11 @@ export function RadarApp() {
   const [sort, setSort] = useState<Sort>("recent");
   // Remoto é requisito, então vem ligado; desligar mostra também presencial e híbrido.
   const [remoteOnly, setRemoteOnly] = useState(true);
-  const [openId, setOpenId] = useState<number | null>(null);
-  const [dragging, setDragging] = useState<Job | null>(null);
-  const [connectOpen, setConnectOpen] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<BoardJob | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -49,47 +58,72 @@ export function RadarApp() {
     useSensor(KeyboardSensor, { keyboardCodes: { start: ["Space"], cancel: ["Escape"], end: ["Space", "Enter"] } }),
   );
 
-  const scoped = useMemo(() => radar.jobs.filter((j) => !remoteOnly || j.remote), [radar.jobs, remoteOnly]);
+  // O filtro de remoto só vale para "Novas": o que você já salvou continua aparecendo.
+  const scoped = useMemo(
+    () => board.jobs.filter((j) => !remoteOnly || j.remote || j.status !== "new"),
+    [board.jobs, remoteOnly],
+  );
   const regionJobs = useMemo(() => scoped.filter((j) => j.region === region), [scoped, region]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return regionJobs
       .filter((j) => level === "all" || j.level === level)
-      .filter((j) => category === "all" || j.company_category === category)
+      .filter((j) => category === "all" || j.category === category)
       .filter((j) => !q || `${j.title} ${j.company} ${j.location ?? ""}`.toLowerCase().includes(q))
       .sort((a, b) => {
-        if (sort === "match") return (b.ai_match ?? -1) - (a.ai_match ?? -1);
         if (sort === "deadline") return deadlineOrder(a) - deadlineOrder(b);
-        return new Date(b.status_changed_at).getTime() - new Date(a.status_changed_at).getTime();
+        return b.statusChangedAt.localeCompare(a.statusChangedAt);
       });
   }, [regionJobs, level, category, query, sort]);
 
   const byStatus = useMemo(() => {
-    const groups = Object.fromEntries(STATUSES.map((s) => [s.id, [] as Job[]])) as Record<Status, Job[]>;
+    const groups = Object.fromEntries(STATUSES.map((s) => [s.id, [] as BoardJob[]])) as Record<Status, BoardJob[]>;
     for (const job of visible) groups[job.status].push(job);
     return groups;
   }, [visible]);
 
   const counts = useMemo(() => {
     const c: Record<Region, number> = { br: 0, intl: 0 };
-    for (const j of scoped) if (j.status === "new" && j.is_active) c[j.region] += 1;
+    for (const j of scoped) if (j.status === "new") c[j.region] += 1;
     return c;
   }, [scoped]);
 
-  const openJob = radar.jobs.find((j) => j.id === openId) ?? null;
-  const closeDrawer = useCallback(() => setOpenId(null), []);
+  const lastVisit = board.lastVisit;
+  const isFresh = useCallback(
+    (job: BoardJob) => job.status === "new" && lastVisit !== null && job.firstSeen > lastVisit,
+    [lastVisit],
+  );
 
-  const onDragStart = (e: DragStartEvent) => setDragging((e.active.data.current?.job as Job) ?? null);
+  const openJob = board.jobs.find((j) => j.id === openId) ?? null;
+  const closeDrawer = useCallback(() => setOpenId(null), []);
+  const closeAdd = useCallback(() => setAdding(false), []);
+
+  const onDragStart = (e: DragStartEvent) => setDragging((e.active.data.current?.job as BoardJob) ?? null);
   const onDragEnd = (e: DragEndEvent) => {
     setDragging(null);
-    const job = e.active.data.current?.job as Job | undefined;
+    const job = e.active.data.current?.job as BoardJob | undefined;
     const target = e.over?.id as Status | undefined;
-    if (job && target && target !== job.status) radar.updateJob(job.id, { status: target });
+    if (job && target && target !== job.status) board.updateJob(job.id, { status: target });
+  };
+
+  const onImport = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const n = await board.importBackup(file);
+      setNotice(
+        n === 0
+          ? "Backup importado. Nada mudou: o board já estava em dia."
+          : `Backup importado: ${n} vagas atualizadas.`,
+      );
+    } catch (err) {
+      setNotice((err as Error).message);
+    }
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const filtersActive = level !== "all" || category !== "all" || query.trim() !== "";
-  const lastRun = radar.summary?.last_run?.finished_at;
+  const failed = data?.stats.failed.length ?? 0;
 
   return (
     <div className="flex min-h-dvh flex-col lg:h-dvh">
@@ -125,45 +159,59 @@ export function RadarApp() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-4 text-sm">
-            {lastRun && <span className="hidden text-mist sm:inline">Última coleta {relativeTime(lastRun)}</span>}
-            {radar.mode === "live" ? (
-              <button onClick={radar.disconnect} className="rounded-lg px-3 py-1.5 text-mist hover:bg-white/5 hover:text-ink">
-                Desconectar
-              </button>
-            ) : (
-              <button
-                onClick={() => setConnectOpen(true)}
-                className="rounded-lg border border-insignia px-3 py-1.5 font-medium text-ink hover:bg-insignia/30"
+          <div className="ml-auto flex items-center gap-2 text-sm">
+            {data && (
+              <span
+                className="mr-2 hidden text-mist sm:inline"
+                title={failed ? `${failed} fontes não responderam na última coleta` : undefined}
               >
-                Conectar API
-              </button>
+                Atualizado {relativeTime(data.generatedAt)}
+              </span>
             )}
+            <IconButton label="Exportar backup do board" onClick={board.exportBackup}>
+              <Download className="size-4" />
+            </IconButton>
+            <IconButton label="Importar backup" onClick={() => fileRef.current?.click()}>
+              <Upload className="size-4" />
+            </IconButton>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => onImport(e.target.files?.[0])}
+            />
+            <button
+              onClick={() => setAdding(true)}
+              className="ml-1 flex items-center gap-1.5 rounded-lg border border-insignia px-3 py-1.5 font-medium text-ink hover:bg-insignia/30"
+            >
+              <Plus aria-hidden className="size-4" />
+              Adicionar vaga
+            </button>
           </div>
         </div>
-
-        {radar.mode === "demo" && (
-          <div className="mx-auto max-w-[1900px] px-5 pb-3 sm:px-8">
-            <p className="text-[13px] text-mist">
-              Modo demonstração com vagas de exemplo. Mover cartões e escrever notas funciona e fica salvo neste navegador.{" "}
-              <button onClick={radar.resetDemo} className="text-pannikin underline-offset-2 hover:underline">
-                Restaurar exemplo
-              </button>
-            </p>
-          </div>
-        )}
       </header>
 
-      {radar.error && (
-        <div role="alert" className="mx-5 mt-3 flex items-center justify-between rounded-xl border border-warn/40 px-4 py-2.5 text-sm text-warn sm:mx-8">
-          {radar.error}
-          <button onClick={radar.clearError} className="ml-4 text-mist hover:text-ink">
+      {notice && (
+        <div
+          role="status"
+          className="mx-5 mt-3 flex items-center justify-between rounded-xl border border-azraq/40 px-4 py-2.5 text-sm text-ink sm:mx-8"
+        >
+          {notice}
+          <button onClick={() => setNotice(null)} className="ml-4 text-mist hover:text-ink">
             Fechar
           </button>
         </div>
       )}
 
       <main className="mx-auto flex w-full max-w-[1900px] flex-1 flex-col px-5 pt-5 sm:px-8 lg:min-h-0">
+        {!data && (
+          <p className="mb-5 rounded-xl border border-warn/40 px-4 py-3 text-sm text-warn">
+            Ainda não existe coleta. Rode <code className="font-mono">npm run collect</code> e recarregue a página.
+            Enquanto isso, dá para adicionar vagas à mão.
+          </p>
+        )}
+
         <PipelineBar jobs={regionJobs} />
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -172,7 +220,9 @@ export function RadarApp() {
             aria-checked={remoteOnly}
             onClick={() => setRemoteOnly((v) => !v)}
             className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-sm transition-colors ${
-              remoteOnly ? "border-insignia bg-insignia/25 font-semibold text-ink" : "border-line bg-deep text-mist hover:text-ink"
+              remoteOnly
+                ? "border-insignia bg-insignia/25 font-semibold text-ink"
+                : "border-line bg-deep text-mist hover:text-ink"
             }`}
           >
             <span
@@ -188,7 +238,10 @@ export function RadarApp() {
 
           <label className="relative min-w-[240px] flex-1 sm:max-w-sm">
             <span className="sr-only">Buscar vaga, empresa ou cidade</span>
-            <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-haze" />
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-haze"
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -201,7 +254,10 @@ export function RadarApp() {
             label="Nível"
             value={level}
             onChange={setLevel}
-            options={[{ id: "all", label: "Todos" }, ...(["intern", "trainee", "junior"] as Level[]).map((l) => ({ id: l, label: LEVEL_LABEL[l] }))]}
+            options={[
+              { id: "all", label: "Todos" },
+              ...(["intern", "trainee", "junior"] as Level[]).map((l) => ({ id: l, label: LEVEL_LABEL[l] })),
+            ]}
           />
 
           <select
@@ -213,7 +269,7 @@ export function RadarApp() {
             <option value="all">Todas as empresas</option>
             {(Object.keys(CATEGORY_LABEL) as Category[]).map((c) => (
               <option key={c} value={c}>
-                {CATEGORY_LABEL[c] === "Banco" ? "Bancos" : CATEGORY_LABEL[c] + "s"}
+                {CATEGORY_PLURAL[c]}
               </option>
             ))}
           </select>
@@ -224,7 +280,6 @@ export function RadarApp() {
             onChange={setSort}
             options={[
               { id: "recent", label: "Recentes" },
-              { id: "match", label: "Aderência" },
               { id: "deadline", label: "Prazo" },
             ]}
           />
@@ -243,31 +298,68 @@ export function RadarApp() {
           )}
         </div>
 
-        <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
+        <DndContext
+          sensors={sensors}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => setDragging(null)}
+        >
           <div className="board-scroll -mx-5 mt-5 flex items-start gap-3 overflow-x-auto px-5 pb-6 sm:-mx-8 sm:px-8 lg:min-h-0 lg:flex-1">
-            {radar.mode === "loading" ? (
-              <p className="text-sm text-mist">Carregando vagas…</p>
+            {!board.ready ? (
+              <p className="text-sm text-mist">Carregando seu board…</p>
             ) : (
               STATUSES.map((s) => (
-                <Column key={s.id} status={s.id} label={s.label} hint={s.hint} jobs={byStatus[s.id]} onOpen={(j) => setOpenId(j.id)} />
+                <Column
+                  key={s.id}
+                  status={s.id}
+                  label={s.label}
+                  hint={s.hint}
+                  jobs={byStatus[s.id]}
+                  isFresh={isFresh}
+                  onOpen={(j) => setOpenId(j.id)}
+                />
               ))
             )}
           </div>
-          <DragOverlay dropAnimation={null}>{dragging ? <JobCard job={dragging} onOpen={() => {}} overlay /> : null}</DragOverlay>
+          <DragOverlay dropAnimation={null}>
+            {dragging ? <JobCard job={dragging} onOpen={() => {}} overlay /> : null}
+          </DragOverlay>
         </DndContext>
       </main>
 
-      <JobDrawer job={openJob} demo={radar.mode === "demo"} onClose={closeDrawer} onUpdate={radar.updateJob} />
-      <ConnectDialog open={connectOpen} hasApi={radar.hasApi} onClose={() => setConnectOpen(false)} onConnect={radar.connect} />
+      <JobDrawer job={openJob} onClose={closeDrawer} onUpdate={board.updateJob} onRemove={board.removeJob} />
+      <AddJobDialog
+        open={adding}
+        defaultRegion={region}
+        onClose={closeAdd}
+        onAdd={(job) => {
+          const id = board.addManual(job);
+          setRegion(job.region);
+          setOpenId(id);
+        }}
+      />
     </div>
   );
 }
 
 // Prazos futuros primeiro (o mais próximo no topo); sem prazo ou já encerrado vai para o fim.
-function deadlineOrder(job: Job): number {
+function deadlineOrder(job: BoardJob): number {
   if (!job.deadline) return Number.MAX_SAFE_INTEGER;
   const t = new Date(job.deadline).getTime();
   return t < Date.now() ? Number.MAX_SAFE_INTEGER - 1 : t;
+}
+
+function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="rounded-lg p-2 text-mist hover:bg-white/5 hover:text-ink"
+    >
+      {children}
+    </button>
+  );
 }
 
 function Segmented<T extends string>({

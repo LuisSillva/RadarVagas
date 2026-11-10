@@ -1,29 +1,30 @@
 "use client";
 
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CATEGORY_LABEL, formatDate, LEVEL_LABEL, REGION_LABEL, STATUSES } from "@/lib/labels";
-import type { Job, JobPatch } from "@/lib/types";
-import { MatchMeter } from "./JobCard";
+import type { BoardJob, Status } from "@/lib/types";
 import { STAGE_COLOR } from "./stage";
 
 interface Props {
-  job: Job | null;
-  demo: boolean;
+  job: BoardJob | null;
   onClose: () => void;
-  onUpdate: (id: number, patch: JobPatch) => void;
+  onUpdate: (id: string, patch: { status?: Status; notes?: string }) => void;
+  onRemove: (id: string) => void;
 }
 
-export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
+export function JobDrawer({ job, onClose, onUpdate, onRemove }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const [notes, setNotes] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [lastJobId, setLastJobId] = useState<number | null>(null);
+  const [lastJobId, setLastJobId] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   if (job && job.id !== lastJobId) {
     setLastJobId(job.id);
     setNotes(job.notes);
     setSavedAt(null);
+    setConfirmRemove(false);
   }
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
 
   if (!job) return null;
 
+  const manual = job.source === "manual";
   const saveNotes = () => {
     if (notes !== job.notes) {
       onUpdate(job.id, { notes });
@@ -55,7 +57,7 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
         <div className="flex items-start justify-between gap-4 px-6 pt-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-pannikin">{job.company}</p>
-            <h2 id="drawer-title" className="mt-1 text-2xl leading-tight font-semibold text-ink text-balance">
+            <h2 id="drawer-title" className="mt-1 text-2xl leading-tight font-semibold text-balance text-ink">
               {job.title}
             </h2>
           </div>
@@ -71,11 +73,11 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
 
         <dl className="mx-6 mt-5 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <Fact term="Nível" value={LEVEL_LABEL[job.level]} />
-          <Fact term="Empresa" value={CATEGORY_LABEL[job.company_category]} />
+          <Fact term="Empresa" value={job.category ? CATEGORY_LABEL[job.category] : "Cadastrada por você"} />
           <Fact term="Local" value={job.location ?? "Não informado"} />
           <Fact term="Aba" value={REGION_LABEL[job.region] + (job.remote ? ", remoto" : "")} />
-          <Fact term="Publicada em" value={formatDate(job.posted_at)} />
-          <Fact term="Encontrada em" value={formatDate(job.first_seen)} />
+          {!manual && <Fact term="Publicada em" value={formatDate(job.postedAt)} />}
+          <Fact term={manual ? "Cadastrada em" : "Encontrada em"} value={formatDate(job.firstSeen)} />
           {job.deadline && <Fact term="Inscrições até" value={formatDate(job.deadline)} />}
         </dl>
 
@@ -90,9 +92,7 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
             <ExternalLink aria-hidden className="size-4" />
           </a>
         ) : (
-          <p className="mx-6 mt-6 rounded-xl border border-line px-4 py-2.5 text-center text-sm text-mist">
-            {demo ? "Vaga de exemplo, sem link. Com a API conectada, o link abre a vaga real." : "Sem link."}
-          </p>
+          <p className="mx-6 mt-6 rounded-xl border border-line px-4 py-2.5 text-center text-sm text-mist">Sem link.</p>
         )}
 
         <section className="mx-6 mt-7">
@@ -118,17 +118,7 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
           </div>
         </section>
 
-        {(job.ai_match !== null || job.ai_reason) && (
-          <section className="mx-6 mt-7">
-            <h3 className="text-sm font-semibold text-ink">Aderência ao seu perfil</h3>
-            <div className="mt-2.5">
-              <MatchMeter value={job.ai_match} />
-            </div>
-            {job.ai_reason && <p className="mt-2 text-sm leading-relaxed text-mist">{job.ai_reason}</p>}
-          </section>
-        )}
-
-        <section className="mx-6 mt-7 mb-8">
+        <section className="mx-6 mt-7">
           <div className="flex items-baseline justify-between">
             <label htmlFor="notes" className="text-sm font-semibold text-ink">
               Notas
@@ -147,8 +137,39 @@ export function JobDrawer({ job, demo, onClose, onUpdate }: Props) {
             placeholder="Contato de indicação, datas do processo, o que estudar para a entrevista…"
             className="mt-2.5 w-full resize-y rounded-xl border border-line bg-abyss/60 px-3.5 py-3 text-sm leading-relaxed text-ink placeholder:text-haze focus:border-azraq focus:outline-none"
           />
-          <p className="mt-1.5 text-xs text-haze">As notas são salvas quando você sai do campo.</p>
+          <p className="mt-1.5 text-xs text-haze">As notas ficam salvas neste navegador quando você sai do campo.</p>
         </section>
+
+        {manual && (
+          <section className="mx-6 mt-6 mb-8">
+            {confirmRemove ? (
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-mist">Excluir esta vaga do board?</span>
+                <button
+                  onClick={() => {
+                    onRemove(job.id);
+                    onClose();
+                  }}
+                  className="rounded-lg bg-warn/20 px-3 py-1.5 font-semibold text-warn hover:bg-warn/30"
+                >
+                  Excluir
+                </button>
+                <button onClick={() => setConfirmRemove(false)} className="text-mist hover:text-ink">
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmRemove(true)}
+                className="flex items-center gap-2 text-sm text-mist hover:text-warn"
+              >
+                <Trash2 aria-hidden className="size-4" />
+                Excluir vaga
+              </button>
+            )}
+          </section>
+        )}
+        {!manual && <div className="mb-8" />}
       </aside>
     </div>
   );

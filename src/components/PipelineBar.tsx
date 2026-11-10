@@ -1,10 +1,10 @@
 import { STATUSES } from "@/lib/labels";
-import type { Job, Status } from "@/lib/types";
+import type { BoardJob, Status } from "@/lib/types";
 import { STAGE_COLOR } from "./stage";
 
 // Resumo do funil: cada etapa ocupa a largura proporcional ao número de vagas,
 // na mesma cor da coluna correspondente.
-export function PipelineBar({ jobs }: { jobs: Job[] }) {
+export function PipelineBar({ jobs }: { jobs: BoardJob[] }) {
   const counts = STATUSES.map((s) => ({ ...s, n: jobs.filter((j) => j.status === s.id).length }));
   const inPlay = counts.filter((c) => c.id !== "new" && c.id !== "closed").reduce((a, c) => a + c.n, 0);
 
